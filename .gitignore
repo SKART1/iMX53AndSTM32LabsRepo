@@ -29,7 +29,11 @@
 
 #Eclipse
 .metadata
+/Lab2/.cproject
+/Lab2/.project
+/Lab2/.settings/*.*
+Lab2/.built-in.o.cmd
 
 #WTF?!
-./RemoteSystemsTempFiles/
+/RemoteSystemsTempFiles/*.*
 

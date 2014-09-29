@@ -36,4 +36,17 @@ Lab2/.built-in.o.cmd
 
 #WTF?!
 /RemoteSystemsTempFiles/*.*
+/Lab2/*.cmd
+/Lab2/*.symvers
+/Lab2/modules.order
+/Lab2/modulePWM.mod.c
+
+
+
+#Gedit
+*.*.d
+
+
+
+
 

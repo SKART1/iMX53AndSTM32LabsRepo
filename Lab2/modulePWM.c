@@ -1,26 +1,38 @@
+/*********************************************************************************/
+/*									Headers										 */	
+/*********************************************************************************/
+//System headers
 #include <linux/module.h>
 #include <linux/interrupt.h>
 #include <linux/gpio.h>
 
-#include "modulePWM.h"
-
-
-/*
- *
-*/
-MODULE_LICENSE ("GPL");
-MODULE_DESCRIPTION ("Simple linux kernel module example.");
-MODULE_AUTHOR ("Student");
-/*-----------------------------------------------------------------------*/
+//User headers
+#include "modulePWM.h"	//Header with prototypes and constants
+#include "EPIT.h"  		//Header with EPIT constants
+/*===============================================================================*/
 
 
 
 
+/*********************************************************************************/
+/*									Macro										 */	
+/*********************************************************************************/
+#define  SET_BITS(WHOM, WHAT)   \
+	WHOM|=(WHAT); 
+
+#define CLEAR_BITS(WHOM,WHAT) \
+	WHOM&=~(WHAT);
+/*===============================================================================*/
 
 
 
-module_init(init_routine);
-module_exit(exit_routine);
+
+/*********************************************************************************/
+/*							Internal module constants							 */	
+/*********************************************************************************/
+#define LOW_FREQUENCY_CLOCK_SOURCE_HZ	32000
+#define PRESCALER						0b001	
+/*===============================================================================*/
 
 
 
@@ -28,80 +40,170 @@ module_exit(exit_routine);
 int usrbtn1_irq_num;
 volatile int usrled_val = 0;
 
-static irqreturn_t usrbtn1_irq_handler( int irq, void *dev_id ){
-    usrled_val = 1 & ~usrled_val;
-    gpio_set_value(GPIO_USRLED, usrled_val);
+
+/*********************************************************************************/
+/*									Interrupts									 */	
+/*********************************************************************************/
+static irqreturn_t usrBtn1IRQHandler(int irq,void *dev_id){
+	//TODO: Add duty cycle decremnet by 10%
+    //usrled_val = 1 & ~usrled_val;
+    //gpio_set_value(GPIO_USRLED, usrled_val);
     return( IRQ_HANDLED );
 }
 
-
-//#define CLKSRC 			24/*Clock source*/
-#define LOW_FREQUENCY_CLOCK (11b<<24)
-
-//#define OM 			22/*EPIT output mode*/
-#define EPIT_DISCONNECTED 	(00b<<22)
-
-
-#define  SET_BITS(WHOM, WHAT)   \
-	WHOM|=(WHAT); 
-
-#define CLEAR_BITS(WHOM,WHAT) \
-	WHOM&=~(WHAT);
-
-
-
-void initEPIT(){
-	unsigned long int EPIT1_EPITCR=0;
-	SET_BITS(EPIT1_EPITCR, LOW_FREQUENCY_CLOCK);
-
-	//EPIT1_EPITCR|=(CLKSRC);
-	
-
-	//EPIT1_EPITCR
-		
-	
+static irqreturn_t usrBtn2IRQHandler(int irq, void *dev_id){
+   // usrled_val = 1 & ~usrled_val;
+   // gpio_set_value(GPIO_USRLED, usrled_val);
+	//TODO: Add duty cycle increment 10%
+    return( IRQ_HANDLED );
 }
+/*===============================================================================*/
 
+
+
+
+/*********************************************************************************/
+/*									Functions									 */	
+/*********************************************************************************/
+ /*
+  * Function to init EPIT timer for half programm half hardware PWM.
+  * The idea of algoryth is to separate period of the timer for two parts
+  *	depending on filling factor. In the first one the output LED will be high
+  *	and in the second will be low. So this values will be loaded in LOAD register in
+  * rotation. The c 
+  *  	
+  */
+int initEPITForPWM(){
+	/*Declaring variables*/
+	//Load register value
+	unsigned long int MODULUS_REGISTER_VALUE_LED_HIGH=0;
+	unsigned long int MODULUS_REGISTER_VALUE_LED_LOW=0;
+
+	//Control register for EPIT N1
+	unsigned long int EPIT1_EPITCR=0; 	
+	/*-------------------------------------------------*/
+
+
+	/*Initializing part*/
+	//Values for modulus register - during which LED will be switch on or off
+	if((LOW_FREQUENCY_CLOCK_SOURCE_HZ/PRESCALER)/REQUIRED_FREQUENCY_HZ>100){
+		MODULUS_REGISTER_VALUE_LED_HIGH=((LOW_FREQUENCY_CLOCK_SOURCE_HZ/PRESCALER)/REQUIRED_FREQUENCY_HZ)*START_DUTY_CYCLE;
+		MODULUS_REGISTER_VALUE_LED_LOW=((LOW_FREQUENCY_CLOCK_SOURCE_HZ/PRESCALER)/REQUIRED_FREQUENCY_HZ)*(1-START_DUTY_CYCLE);
+	}
+	else{	
+		printk("[ERROR]: The of  LOW_FREQUENCY_CLOCK_SOURCE_HZ, PRESCALER, REQUIRED_FREQUENCY_HZ results in value for MODULUS register \n");
+		return -1;
+	};
+
+	//EPIT control register
+	//Clock source is 32 kHZ oscillator	
+	SET_BITS(EPIT1_EPITCR, CLKSRC_LOW_FREQUENCY_CLOCK);
+	//No actions are neccessary on output pins(?!)
+	SET_BITS(EPIT1_EPITCR, OM_EPIT_DISCONNECTED);
+	//Timer will work even in STOP state of system
+	SET_BITS(EPIT1_EPITCR, STOPEN_ENABLED);
+	//Timer will work even in WAIT state of system
+	SET_BITS(EPIT1_EPITCR,WAITEN_ENABLED);
+	//Timer will work even in DEBUG state of system
+	SET_BITS(EPIT1_EPITCR,DBGEN_ENABLED);
+	//Timer counter register will be immideatelly set to value in MODULUS register if it is changed
+	SET_BITS(EPIT1_EPITCR,IOVW_COUNTER_OVERRITEN);
+	//Prescaller equals to 1 - means now prescale
+	SET_BITS(EPIT1_EPITCR,(PRESCALER<<PRESCALER_BASE_ADDRESS));
+	//Timer will reload it`s value from modulus register - really do not used. We will overite MODULUS value manually 
+	//when timer will reach zero and because of "SET_BITS(EPIT1_EPITCR,IOVW_COUNTER_OVERRITEN);" above 
+	SET_BITS(EPIT1_EPITCR,RLD_LOAD_FROM_MODULUS);
+	//Switch on interrupts caused by equality of timer value and compare registers
+	SET_BITS(EPIT1_EPITCR,OCIEN_COMP_INTER_ENAB);
+	//Counter will continue from previous values if it will be paused
+	SET_BITS(EPIT1_EPITCR,ENMOD_COUNTER_WILL_CONTINUE);
+	//
+	SET_BITS(EPIT1_EPITCR,EN_TIMER_ENABLED);
+	/*-------------------------------------------------*/
+
+
+	/*Write values to device*/
+	//TODO add write to configure registers
+	//gpio_set_value(GPIO_USRLED, usrled_val);
+	/*-------------------------------------------------*/
+	
+
+	return 0;
+}
+ /*-------------------------------------------------------------------------------*/
+
+ /*
+  * Initialize LEDs - first checks if the ports are correct, after that setting pin (port) as output
+  */
+int initLED(unsigned int portNumber){
+	//Checking if GPIO is valid (>0, <MAX) and so on - rather primitive function
+	if(gpio_is_valid(GPIO_USRLED)!=0){
+		printk(KERN_INFO "[ERROR]: %s: initLED gpio_is_valid\n", MODULE_NAME);
+		return -1;
+	}
+
+	//
+	gpio_free(GPIO_USRLED);
+
+	//
+	if(gpio_request(GPIO_USRLED, MODULE_NAME)!=0){
+		printk(KERN_INFO "[ERROR]: %s: initLED gpio_request\n", MODULE_NAME);
+		return -1;
+	}
+
+	if(gpio_direction_output(GPIO_USRLED,usrled_val)){
+		printk(KERN_INFO "[ERROR]: %s: initLED gpio_direction_output\n", MODULE_NAME);
+		return -1;
+	}
+};
+
+ /*
+  * Initialize USERBUTTONS - first checks if the ports are correct, after that setting pins (ports) as inputs.
+  *	and add interrupt handlers for event PRESSING button
+  */
+int initButtons(){
+	//
+	if(gpio_is_valid( GPIO_USRBTN1 )==0){
+		printk(KERN_INFO "[ERROR]: %s: initButtons gpio_is_valid\n", MODULE_NAME);
+	};	
+	gpio_free(GPIO_USRBTN1);
+
+	//
+	if(gpio_request( GPIO_USRBTN1, MODULE_NAME )!=0){
+
+	};
+
+	if(gpio_direction_input(GPIO_USRBTN1)!=0){
+
+	};
+
+	//usrbtn1_irq_num = gpio_to_irq(GPIO_USRBTN1);
+	//result = request_irq( usrbtn1_irq_num, (*usrbtn1_irq_handler), IRQF_TRIGGER_FALLING,MODULE_NAME, NULL );
+	//__ERROR_RETURN(result, "GPIO_USRBTN1 request_irq");
+	//gpio_free( GPIO_USRBTN1 );
+};
+/*===============================================================================*/
 
 
 
 static int __init init_routine(void){
-    int result = 0;
-    
-    printk( KERN_INFO "%s: initialization.\n", MODULE_NAME);
 
-    if(gpio_is_valid(GPIO_USRLED)==-1){
-    	printk(KERN_INFO "[ERROR]: %s: gpio_is_invalid\n");
-    	return -1;
-    }
+	printk( KERN_INFO "%s: initialization.\n", MODULE_NAME);
 
-    printk("gpio_is_valid: %i", result);
-    __ERROR_RETURN(result, "USRLED gpio_is_valid");
-    gpio_free( GPIO_USRLED );
-    result = gpio_request( GPIO_USRLED, MODULE_NAME );
-    __ERROR_RETURN(result, "USRLED gpio_request");
-    result = gpio_direction_output( GPIO_USRLED, usrled_val);
-    __ERROR_RETURN(result, "USRLED gpio_direction_output");
-    
-    result = -1 + gpio_is_valid( GPIO_USRBTN1 );
-    __ERROR_RETURN(result, "GPIO_USRBTN1 gpio_is_valid");
-    gpio_free( GPIO_USRBTN1 );
-    result = gpio_request( GPIO_USRBTN1, MODULE_NAME );
-    __ERROR_RETURN(result, "GPIO_USRBTN1 gpio_request" );
-    result = gpio_direction_input( GPIO_USRBTN1 );
-    __ERROR_RETURN(result, "GPIO_USRBTN1 gpio_direction_input");
-    usrbtn1_irq_num = gpio_to_irq( GPIO_USRBTN1 );
-    result = request_irq( usrbtn1_irq_num, (*usrbtn1_irq_handler), IRQF_TRIGGER_FALLING,MODULE_NAME, NULL );
-    __ERROR_RETURN(result, "GPIO_USRBTN1 request_irq");
-    gpio_free( GPIO_USRBTN1 );
-    
-    printk( KERN_INFO "%s: started.\n", MODULE_NAME);
-    return 0;
+	
+
+	
+
+	printk( KERN_INFO "[INFO]: %s: started.\n", MODULE_NAME);
+	return 0;
 }
-static void __exit exit_routine(void)
-{
-    free_irq( usrbtn1_irq_num, NULL );
-    gpio_free( GPIO_USRLED );
+
+static void __exit exit_routine(void){
+    free_irq(usrbtn1_irq_num, NULL);
+    gpio_free(GPIO_USRLED);
     gpio_set_value(GPIO_USRLED, 1);
-    printk( KERN_INFO "%s: stopped.\n", MODULE_NAME);
+    printk(KERN_INFO "[INFO]: %s: stopped.\n", MODULE_NAME);
 }
+
+module_init(init_routine);
+module_exit(exit_routine);

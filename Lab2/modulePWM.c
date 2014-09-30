@@ -137,7 +137,9 @@ int initEPITForPWM(){
   */
 int initLED(unsigned int portNumber){
 	//Checking if GPIO is valid (>0, <MAX) and so on - rather primitive function
-	if(gpio_is_valid(GPIO_USRLED)!=0){
+	//See more in http://lwn.net/Articles/532717/
+	//and http://lwn.net/Articles/532714/
+	if(gpio_is_valid(GPIO_USRLED)!=1){
 		printk(KERN_INFO "[ERROR]: %s: initLED gpio_is_valid\n", MODULE_NAME);
 		return -1;
 	}
@@ -145,13 +147,21 @@ int initLED(unsigned int portNumber){
 	//
 	gpio_free(GPIO_USRLED);
 
-	//
+	//Allocate the GPIO
+	/*GPIOs must be allocated before use, though the current implementation does not enforce this requirement. The basic allocation function is:
+	    int gpio_request(unsigned int gpio, const char *label);
+   	  The gpio parameter indicates which GPIO is required, while label associates a string with it that can later appear in sysfs. 
+	  The usual convention applies: a zero return code indicates success; otherwise the return value will be a negative error number. 
+	  A GPIO can be returned to the system with:
+    	void gpio_free(unsigned int gpio);
+	*/
 	if(gpio_request(GPIO_USRLED, MODULE_NAME)!=0){
 		printk(KERN_INFO "[ERROR]: %s: initLED gpio_request\n", MODULE_NAME);
 		return -1;
 	}
-
-	if(gpio_direction_output(GPIO_USRLED,usrled_val)){
+	
+	//Set the direction of GPIO and also initial value
+	if(gpio_direction_output(GPIO_USRLED,usrled_val)!=0){
 		printk(KERN_INFO "[ERROR]: %s: initLED gpio_direction_output\n", MODULE_NAME);
 		return -1;
 	}
@@ -176,6 +186,16 @@ int initButtons(){
 	if(gpio_direction_input(GPIO_USRBTN1)!=0){
 
 	};
+
+
+	//
+	/*Some GPIO controllers can generate interrupts when an input GPIO changes value.
+	  In such cases, code wishing to handle such interrupts should start by determining which IRQ number is associated with a given GPIO line:
+	  	int gpio_to_irq(unsigned int gpio);
+	  The given gpio must have been obtained with gpio_request() and put into the input mode first. 
+	  If there is an associated interrupt number, it will be passed back as the return value from gpio_to_irq(); 
+	  otherwise a negative error number will be returned.
+	*/
 
 	//usrbtn1_irq_num = gpio_to_irq(GPIO_USRBTN1);
 	//result = request_irq( usrbtn1_irq_num, (*usrbtn1_irq_handler), IRQF_TRIGGER_FALLING,MODULE_NAME, NULL );

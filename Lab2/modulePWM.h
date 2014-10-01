@@ -22,6 +22,7 @@
 	#define 	MODULE_NAME 			"modulePWM"		//Module name for /var/log/syslog
 	#define 	GPIO_USRLED 			199				//Port number of USRLED on iMX53 starter board
 	#define 	GPIO_USRBTN1 			46				//User button 1 on iMX53 starter board
+	#define 	GPIO_USRBTN1 			46				//User button 2 on iMX53 starter board
 
 	#define 	REQUIRED_FREQUENCY_HZ	2				//Required frequency by task
 	#define 	START_DUTY_CYCLE		0.5				//Duty cycle at start

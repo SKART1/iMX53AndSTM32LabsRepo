@@ -37,7 +37,8 @@
 
 
 
-int usrbtn1_irq_num;
+int usrBtn1IRQNumber;
+int usrBtn2IRQNumber;
 volatile int usrled_val = 0;
 
 
@@ -58,6 +59,7 @@ static irqreturn_t usrBtn2IRQHandler(int irq, void *dev_id){
     return( IRQ_HANDLED );
 }
 /*===============================================================================*/
+
 
 
 
@@ -132,20 +134,21 @@ int initEPITForPWM(){
 }
  /*-------------------------------------------------------------------------------*/
 
+
+
+
  /*
   * Initialize LEDs - first checks if the ports are correct, after that setting pin (port) as output
   */
-int initLED(unsigned int portNumber){
-	//Checking if GPIO is valid (>0, <MAX) and so on - rather primitive function
+int initLED(unsigned int portLEDNumber){
+	//Checking if GPIO is valid on this type of architecture (>0, <MAX) and so on - rather primitive function
 	//See more in http://lwn.net/Articles/532717/
 	//and http://lwn.net/Articles/532714/
-	if(gpio_is_valid(GPIO_USRLED)!=1){
+	if(gpio_is_valid(portLEDNumber)!=1){
 		printk(KERN_INFO "[ERROR]: %s: initLED gpio_is_valid\n", MODULE_NAME);
 		return -1;
 	}
 
-	//
-	gpio_free(GPIO_USRLED);
 
 	//Allocate the GPIO
 	/*GPIOs must be allocated before use, though the current implementation does not enforce this requirement. The basic allocation function is:
@@ -155,40 +158,74 @@ int initLED(unsigned int portNumber){
 	  A GPIO can be returned to the system with:
     	void gpio_free(unsigned int gpio);
 	*/
-	if(gpio_request(GPIO_USRLED, MODULE_NAME)!=0){
+	if(gpio_request(portLEDNumber, MODULE_NAME)!=0){
 		printk(KERN_INFO "[ERROR]: %s: initLED gpio_request\n", MODULE_NAME);
-		return -1;
+		goto ERROR;
 	}
+
 	
 	//Set the direction of GPIO and also initial value
-	if(gpio_direction_output(GPIO_USRLED,usrled_val)!=0){
+	/*For compatibility with legacy interfaces to GPIOs, setting the direction
+	  of a GPIO implicitly requests that GPIO (see below) if it has not been
+	  requested already.  That compatibility is being removed from the optional
+	  gpiolib framework. (Documentation/gpio.txt)
+	*/
+	if(gpio_direction_output(portLEDNumber,usrled_val)!=0){
 		printk(KERN_INFO "[ERROR]: %s: initLED gpio_direction_output\n", MODULE_NAME);
-		return -1;
+		goto ERROR;
 	}
+	return 0;
+
+
+ERROR:
+	//We have requested gpio - so we should free it even if it were error
+	gpio_free(GPIO_USRBTN1);	
+	return -1;
 };
+
+
+
 
  /*
   * Initialize USERBUTTONS - first checks if the ports are correct, after that setting pins (ports) as inputs.
   *	and add interrupt handlers for event PRESSING button
   */
-int initButtons(){
-	//
-	if(gpio_is_valid( GPIO_USRBTN1 )==0){
-		printk(KERN_INFO "[ERROR]: %s: initButtons gpio_is_valid\n", MODULE_NAME);
+int initButtons(unsigned int portButton1Number, unsigned int portButton2Number){
+	//Checking if GPIO is valid on this type of architecture (>0, <MAX) and so on - rather primitive function
+	//See more in http://lwn.net/Articles/532717/
+	//and http://lwn.net/Articles/532714/
+	if(gpio_is_valid(portButton1Number)==0){
+		printk(KERN_INFO "[ERROR]: %s: initButtons 1 gpio_is_valid\n", MODULE_NAME);
+		return -1;
 	};	
-	gpio_free(GPIO_USRBTN1);
+	if(gpio_is_valid(portButton2Number)==0){
+		printk(KERN_INFO "[ERROR]: %s: initButtons 2 gpio_is_valid\n", MODULE_NAME);
+		return -1;
+	};	
 
-	//
-	if(gpio_request( GPIO_USRBTN1, MODULE_NAME )!=0){
-
+	//Allocate gpio (see description above)
+	if(gpio_request(portButton1Number, MODULE_NAME )!=0){
+		printk(KERN_INFO "[ERROR]: %s: initButtons 1 gpio_request\n", MODULE_NAME);
+		return -1;
+	};
+	if(gpio_request(portButton2Number, MODULE_NAME )!=0){
+		printk(KERN_INFO "[ERROR]: %s: initButtons 2 gpio_request\n", MODULE_NAME);
+		return -1;
 	};
 
-	if(gpio_direction_input(GPIO_USRBTN1)!=0){
 
+	//Set direction as input
+	if(gpio_direction_input(portButton1Number)!=0){
+		printk(KERN_INFO "[ERROR]: %s: initButtons 1 gpio_direction_input\n", MODULE_NAME);
+		goto ERROR;
+	};
+	if(gpio_direction_input(portButton2Number)!=0){
+		printk(KERN_INFO "[ERROR]: %s: initButtons 2 gpio_direction_input\n", MODULE_NAME);
+		goto ERROR;
 	};
 
 
-	//
+	//Get number of irq associated with this gpio (if exist)
 	/*Some GPIO controllers can generate interrupts when an input GPIO changes value.
 	  In such cases, code wishing to handle such interrupts should start by determining which IRQ number is associated with a given GPIO line:
 	  	int gpio_to_irq(unsigned int gpio);
@@ -196,32 +233,59 @@ int initButtons(){
 	  If there is an associated interrupt number, it will be passed back as the return value from gpio_to_irq(); 
 	  otherwise a negative error number will be returned.
 	*/
+	if((usrBtn1IRQNumber = gpio_to_irq(portButton1Number))<0){
+		printk(KERN_INFO "[ERROR]: %s: initButtons 1 gpio_to_irq\n", MODULE_NAME);
+		goto ERROR;
+	};
+	if((usrBtn2IRQNumber = gpio_to_irq(portButton2Number))<0){
+		printk(KERN_INFO "[ERROR]: %s: initButtons 2 gpio_to_irq\n", MODULE_NAME);
+		goto ERROR;
+	};
 
-	//usrbtn1_irq_num = gpio_to_irq(GPIO_USRBTN1);
-	//result = request_irq( usrbtn1_irq_num, (*usrbtn1_irq_handler), IRQF_TRIGGER_FALLING,MODULE_NAME, NULL );
-	//__ERROR_RETURN(result, "GPIO_USRBTN1 request_irq");
-	//gpio_free( GPIO_USRBTN1 );
+	//Set irq handler to function  usrBtn1IRQHandler
+	if(request_irq(usrBtn1IRQNumber,(*usrBtn1IRQHandler),IRQF_TRIGGER_FALLING,MODULE_NAME,NULL)!=0){
+		printk(KERN_INFO "[ERROR]: %s: initButtons 1 request_irq\n", MODULE_NAME);
+		goto ERROR;
+	};
+	if(request_irq(usrBtn2IRQNumber,(*usrBtn1IRQHandler),IRQF_TRIGGER_FALLING,MODULE_NAME,NULL)!=0){
+		printk(KERN_INFO "[ERROR]: %s: initButtons 2 request_irq\n", MODULE_NAME);
+		goto ERROR;
+	};		
+	return 0;
+
+ERROR:
+	//We have requested gpio - so we should free it even if it were error
+	gpio_free(portButton1Number);	
+	return -1;	
 };
 /*===============================================================================*/
 
 
 
 static int __init init_routine(void){
-
 	printk( KERN_INFO "%s: initialization.\n", MODULE_NAME);
+	if(initLED(GPIO_USRLED)!=0){
+		return -1;
+	}
 
-	
+	if(initButtons(GPIO_USRBTN1, GPIO_USRBTN2)!=0){
+		return -1
+	}
 
-	
-
-	printk( KERN_INFO "[INFO]: %s: started.\n", MODULE_NAME);
+	printk( KERN_INFO "[INFO]%s: initialization finished. Module has been started\n", MODULE_NAME);
 	return 0;
 }
 
 static void __exit exit_routine(void){
-    free_irq(usrbtn1_irq_num, NULL);
-    gpio_free(GPIO_USRLED);
+    free_irq(usrBtn1IRQNumber, NULL);
+    free_irq(usrBtn2IRQNumber, NULL);
+
+	//We do not use USRBTN1 anymore
+	gpio_free(GPIO_USRBTN1);
+	//Let LED be switched on
     gpio_set_value(GPIO_USRLED, 1);
+	//We do not use led anymore
+    gpio_free(GPIO_USRLED);
     printk(KERN_INFO "[INFO]: %s: stopped.\n", MODULE_NAME);
 }
 

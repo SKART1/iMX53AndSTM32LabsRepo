@@ -8,6 +8,12 @@
 
 #ifndef EPIT_H_
 #define EPIT_H_
+	//EPIT register description
+	#define BASE_ADRESS 				0x53FAC000			//Adress of the first register for 
+	#define REGISTERS_TOTAL_LENGTH 		20					//Number of registers in row
+
+	//IRQ
+	#define EPIT_IRQ_NUMBER 			40 					//Number of IRQ for EPIT
 
 	//EPITx_EPITCR field possible values (see page 1142 of manual)
 	#define CLKSRC_LOW_FREQUENCY_CLOCK 	(0b11<<24) 	/*Clock source 32 kHZ*/
@@ -41,7 +47,7 @@
 	#define ENMOD_COUNTER_WILL_RESTART	(0b1<<1)	/*Counter will continue to count from zeroes (or MODULUS) when it will start again*/
 
 	#define EN_TIMER_DISABLED			(0b0<<0)	/*Counter is disabled*/
-	#define EN_TIMER_ENABLED			(0b1<<1)	/*Counter is enabled*/
+	#define EN_TIMER_ENABLED			(0b1<<0)	/*Counter is enabled*/
 
 	//Functions
 	#define SWITCH_ON_TIMER

@@ -26,25 +26,25 @@
 													0xff - 128 Seconds.*/
 
 	
-	#define WAIT_DISABLE					(0b0<<7)	/*Continue WDOG-1 timer operation (Default).*/
-	#define WAIT_ENABLE						(0b1<<7)	/*Suspend WDOG-1 timer operation.*/
+	#define WDW_WAIT_DISABLE					(0b0<<7)	/*Continue WDOG-1 timer operation (Default).*/
+	#define WDW_WAIT_ENABLE						(0b1<<7)	/*Suspend WDOG-1 timer operation.*/
 														/*Watchdog Disable for Wait. This bit determines the operation of WDOG-1 during Low Power WAIT mode.*/
 														/*This is a write once only bit.*/
 	
 	/* RESERVED 6 bit */
 	
-	#define WDW_ASSERT_WDOG_SIGNAL					(0b0<<5)	/*Assert WDOG output.*/
-	#define NO_ASSERT_WDOG_SIGNAL				(0b1<<5)	/*No effect on system (Default)*/
+	#define WDA_ASSERT_WDOG_SIGNAL					(0b0<<5)	/*Assert WDOG output.*/
+	#define WDA_NO_ASSERT_WDOG_SIGNAL				(0b1<<5)	/*No effect on system (Default)*/
 															/*WDOG assertion. Controls the software assertion of the WDOG signal.*/
 	
-	#define ASSERT_WDOG_RESET_SIGNAL			(0b0<<4)	/*Assert system reset signa*/
-	#define NO_ASSERT_WDOG_RESET_SIGNAL			(0b1<<4)	/*No effect on the system (Default)*/
+	#define SRS_ASSERT_WDOG_RESET_SIGNAL			(0b0<<4)	/*Assert system reset signa*/
+	#define SRS_NO_ASSERT_WDOG_RESET_SIGNAL			(0b1<<4)	/*No effect on the system (Default)*/
 															/*Software Reset Signal. Controls the software assertion of the WDOG-generated reset signal wdog_rst .*/ 
 															/*This bit automatically resets to "1" after it has been asserted to "0".*/
 															/*NOTE: This bit does not generate the software reset to the block.*/
 															
-	#define TIMEOUT_ASSERTION_DISABLED			(0b0<<3)	/*No effect on WDOG (Default)*/
-	#define TIMEOUT_ASSERTION_ENABLED			(0b1<<3)	/*Assert WDOG upon a Watchdog Time-out event*/
+	#define WDT_TIMEOUT_ASSERTION_DISABLED			(0b0<<3)	/*No effect on WDOG (Default)*/
+	#define WDT_TIMEOUT_ASSERTION_ENABLED			(0b1<<3)	/*Assert WDOG upon a Watchdog Time-out event*/
 															/*WDOG Time-out assertion. Determines if the WDOG gets asserted upon a Watchdog Time-out Event.*/
 															/*This is a write-one once only bit.*/
 															/*NOTE: There is no effect on wdog_rst (WDOG Reset) upon writing on this bit. WDOG gets asserted*/
@@ -52,22 +52,22 @@
 	
 	
 													
-	#define WATCHDOG_DISABLED			(0b0<<2)	/*Disable the Watchdog (Default)*/
-	#define WATCHDOG_ENABLED			(0b1<<2)	/*Enable the Watchdog.*/
+	#define WDE_WATCHDOG_DISABLED			(0b0<<2)	/*Disable the Watchdog (Default)*/
+	#define WDE_WATCHDOG_ENABLED			(0b1<<2)	/*Enable the Watchdog.*/
 													/*Watchdog Enable. Enables or disables the WDOG-1 block. This is a write one once only bit. It is not*/
 													/*possible to clear this bit by a software write, once the bit is set*/
 													/*NOTE: This bit can be set/reset in debug mode (exception).*/
 	
 	
 												
-	#define DEBUG_DISABLED			(0b0<<1)	/*Continue WDOG-1 timer operation (Default)*/
-	#define DEBUG_ENABLED			(0b1<<1)	/*Suspend the watchdog timer*/
+	#define WDBG_DEBUG_DISABLED			(0b0<<1)	/*Continue WDOG-1 timer operation (Default)*/
+	#define WDBG_DEBUG_ENABLED			(0b1<<1)	/*Suspend the watchdog timer*/
 												/*Determines the operation of the WDOG-1 during DEBUG mode. This bit is write once-only*/
 												
 												
 													
-	#define LOW_POWER_DISABLED			(0b0<<0)	/*Continue timer operation (Default)*/
-	#define LOW_POWER_ENABLED			(0b1<<0)	/*Suspend the watchdog timer*/
+	#define WDZST_LOW_POWER_DISABLED			(0b0<<0)	/*Continue timer operation (Default)*/
+	#define WDZST_LOW_POWER_ENABLED			(0b1<<0)	/*Suspend the watchdog timer*/
 													/*Watchdog Low Power. Determines the operation of the WDOG-1 during low-power modes.*/
 													/*This bit is write once-only*/
 

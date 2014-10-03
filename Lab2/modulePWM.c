@@ -51,45 +51,45 @@ ProgrammContext programmContext={0,0,0,NULL,0,0};
 /*									Interrupts									 */	
 /*********************************************************************************/
  /*
-  *increment current duty cycle (decrement length of HIGH value of LED,increment length of LOW value of LED state
+  *Increment current duty cycle (increment length of HIGH value of LED, decrement length of LOW value of LED state
   */
-static irqreturn_t usrBtn1IRQHandler(int irq,void *dev_id){
-	//TODO: Add duty cycle decremnet by 10%
-    //usrled_val = 1 & ~usrled_val;
-    //gpio_set_value(GPIO_USRLED, usrled_val);
-
-	printk("[INFO]: User Button 1\n");
+static irqreturn_t usrBtn1IRQHandler(int irq, void *dev_id){
+	if(programmContext.modulusRegisterValueLEDHigh<((LOW_FREQUENCY_CLOCK_SOURCE_HZ/PRESCALER)/REQUIRED_FREQUENCY_HZ) && programmContext.modulusRegisterValueLEDLow>programmContext.modulusRegisterValueLEDStep){
+		programmContext.modulusRegisterValueLEDHigh+=programmContext.modulusRegisterValueLEDStep;
+		programmContext.modulusRegisterValueLEDLow-=programmContext.modulusRegisterValueLEDStep;
+	}	
     return( IRQ_HANDLED );
 }
+
 
  /*
-  *Decrement current duty cycle (increment length of HIGH value of LED, decrement length of LOW value of LED state
+  *Decrement current duty cycle (decrement length of HIGH value of LED,increment length of LOW value of LED state
   */
-static irqreturn_t usrBtn2IRQHandler(int irq, void *dev_id){
-   // usrled_val = 1 & ~usrled_val;
-   // gpio_set_value(GPIO_USRLED, usrled_val);
-	//TODO: Add duty cycle increment 10%
-	printk("[INFO]: User Button 2\n");
+static irqreturn_t usrBtn2IRQHandler(int irq,void *dev_id){
+	if(programmContext.modulusRegisterValueLEDLow<((LOW_FREQUENCY_CLOCK_SOURCE_HZ/PRESCALER)/REQUIRED_FREQUENCY_HZ) && programmContext.modulusRegisterValueLEDHigh>programmContext.modulusRegisterValueLEDStep){
+		programmContext.modulusRegisterValueLEDHigh-=programmContext.modulusRegisterValueLEDStep;
+		programmContext.modulusRegisterValueLEDLow+=programmContext.modulusRegisterValueLEDStep;
+	}
     return( IRQ_HANDLED );
 }
+
 
  /*
   *Invert LED value. Load new value to LOAD register of EPIT depending on value of LED
+  *Clean interrupt bit in EPIT status register
   */
 static irqreturn_t irqEPITHandler(int irq, void *dev_id){
-	
-	//TODO add cleaning interupt bit in EPIT status register
-	printk("[INFO]: Timer\n");
 	programmContext.usrled_val = 1 & ~ programmContext.usrled_val;
     gpio_set_value(GPIO_USRLED, programmContext.usrled_val);
+	//New start value of timer
 	if(programmContext.usrled_val==0){
-	
+		iowrite32(programmContext.modulusRegisterValueLEDLow, ((char *)programmContext.EPITRegistersMapBegin)+LOAD_REGISTER_OFFSET_BYTES);
 	}
 	else{
-	
+		iowrite32(programmContext.modulusRegisterValueLEDHigh, ((char *)programmContext.EPITRegistersMapBegin)+LOAD_REGISTER_OFFSET_BYTES);
 	}
-
-	iowrite32(ioread32(((char *)programmContext.EPITRegistersMapBegin)+4)|0x00000001,((char *)programmContext.EPITRegistersMapBegin)+4);
+	//Cleaning interupt bit in EPIT status register
+	iowrite32(ioread32(((char *)programmContext.EPITRegistersMapBegin)+STATUS_REGISTER_OFFSET_BYTES)|0x00000001,((char *)programmContext.EPITRegistersMapBegin)+4);
 	return( IRQ_HANDLED );
 }
 /*===============================================================================*/
@@ -122,6 +122,7 @@ int initEPITForPWMAndStart(){
 	if((LOW_FREQUENCY_CLOCK_SOURCE_HZ/PRESCALER)/REQUIRED_FREQUENCY_HZ>100){
 		programmContext.modulusRegisterValueLEDHigh=((LOW_FREQUENCY_CLOCK_SOURCE_HZ/PRESCALER)/REQUIRED_FREQUENCY_HZ)*START_DUTY_CYCLE;
 		programmContext.modulusRegisterValueLEDLow=((LOW_FREQUENCY_CLOCK_SOURCE_HZ/PRESCALER)/REQUIRED_FREQUENCY_HZ)*(1-START_DUTY_CYCLE);
+		programmContext.modulusRegisterValueLEDStep=((LOW_FREQUENCY_CLOCK_SOURCE_HZ/PRESCALER)/REQUIRED_FREQUENCY_HZ)/20;
 	}
 	else{	
 		printk("[ERROR]: LOW_FREQUENCY_CLOCK_SOURCE_HZ, PRESCALER, REQUIRED_FREQUENCY_HZ values gives result too LOW for correct PWM work \n");
@@ -166,13 +167,13 @@ int initEPITForPWMAndStart(){
 
 	//Write EPIT config register
 	//TODO add offsets of registers in EPIT.h
-	iowrite32(EPIT1_EPITCR, programmContext.EPITRegistersMapBegin);
+	iowrite32(EPIT1_EPITCR, programmContext.EPITRegistersMapBegin+CONTROL_REGISTER_OFFSET_BYTES);
 
 	//Compare register is set to zero: because of algorythm
-	iowrite32(0L, ((char *)programmContext.EPITRegistersMapBegin)+12);
+	iowrite32(0L, ((char *)programmContext.EPITRegistersMapBegin)+COMPARE_REGISTER_OFFSET_BYTES);
 
 	//Start value - let it be LED high length (because LED is also started at that moment)
-	iowrite32(programmContext.modulusRegisterValueLEDHigh, ((char *)programmContext.EPITRegistersMapBegin)+8);
+	iowrite32(programmContext.modulusRegisterValueLEDHigh, ((char *)programmContext.EPITRegistersMapBegin)+LOAD_REGISTER_OFFSET_BYTES);
 	/*-------------------------------------------------*/
 
 
@@ -206,9 +207,11 @@ int initEPITForPWMAndStart(){
 
 	
 ERROR_STEP3:
-	disable_irq(EPIT_IRQ_NUMBER);
 	free_irq(EPIT_IRQ_NUMBER,MODULE_NAME); 
+	disable_irq(EPIT_IRQ_NUMBER);	
 ERROR_STEP2:
+	iounmap(programmContext.EPITRegistersMapBegin);
+	release_mem_region(BASE_ADRESS,  REGISTERS_TOTAL_LENGTH);
 ERROR_STEP1:
 ERROR_STEP0:
 	return -1;
@@ -314,7 +317,7 @@ int initButtons(unsigned long int  portButton1Number, unsigned long int  portBut
 		printk(KERN_INFO "[ERROR]: %s: initButtons 1 gpio_request\n", MODULE_NAME);
 		goto ERROR_STEP1_1;
 	};
-	if(gpio_request(portButton2Number, "TESTMY" )!=0){
+	if(gpio_request(portButton2Number, MODULE_NAME )!=0){
 		printk(KERN_INFO "[ERROR]: %s: initButtons 2 gpio_request\n", MODULE_NAME);
 		goto ERROR_STEP1_2;
 	};

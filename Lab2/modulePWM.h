@@ -36,6 +36,7 @@
 		void * EPITRegistersMapBegin;
 		volatile unsigned long int modulusRegisterValueLEDHigh;
 		volatile unsigned long int modulusRegisterValueLEDLow;
+		unsigned long int modulusRegisterValueLEDStep;
 	} ProgrammContext;
 
 

@@ -9,8 +9,12 @@
 #ifndef EPIT_H_
 #define EPIT_H_
 	//EPIT register description
-	#define BASE_ADRESS 				0x53FAC000			//Adress of the first register for 
-	#define REGISTERS_TOTAL_LENGTH 		20					//Number of registers in row
+	#define BASE_ADRESS 						0x53FAC000			//Adress of the first register for 
+	#define REGISTERS_TOTAL_LENGTH 				20					//Number of registers in row
+	#define	CONTROL_REGISTER_OFFSET_BYTES		0
+	#define	STATUS_REGISTER_OFFSET_BYTES		4
+	#define LOAD_REGISTER_OFFSET_BYTES			8
+	#define	COMPARE_REGISTER_OFFSET_BYTES		12
 
 	//IRQ
 	#define EPIT_IRQ_NUMBER 			40 					//Number of IRQ for EPIT

@@ -163,7 +163,7 @@ int initEPITForPWMAndStart(){
 		goto ERROR_STEP1;
 	}	
 	//map physical memory to virtual memory of module
-	programmContext.EPITRegistersMapBegin=ioremap(BASE_ADRESS,  REGISTERS_TOTAL_LENGTH);	
+	programmContext.EPITRegistersMapBegin=ioremap(EPIT_CONFIG_REG_BASE_ADRESS,  EPIT_CONFIG_REG_TOTAL_LENGTH);	
 
 	//Write EPIT config register
 	//TODO add offsets of registers in EPIT.h
@@ -211,7 +211,7 @@ ERROR_STEP3:
 	disable_irq(EPIT_IRQ_NUMBER);	
 ERROR_STEP2:
 	iounmap(programmContext.EPITRegistersMapBegin);
-	release_mem_region(BASE_ADRESS,  REGISTERS_TOTAL_LENGTH);
+	release_mem_region(EPIT_CONFIG_REG_BASE_ADRESS,  EPIT_CONFIG_REG_TOTAL_LENGTH);
 ERROR_STEP1:
 ERROR_STEP0:
 	return -1;
@@ -233,7 +233,7 @@ void deInitEPIT(){
 	free_irq(EPIT_IRQ_NUMBER,MODULE_NAME); 
 	disable_irq(EPIT_IRQ_NUMBER);
 	iounmap(programmContext.EPITRegistersMapBegin);
-	release_mem_region(BASE_ADRESS,  REGISTERS_TOTAL_LENGTH);
+	release_mem_region(EPIT_CONFIG_REG_BASE_ADRESS,  EPIT_CONFIG_REG_TOTAL_LENGTH);
 }
  /*-------------------------------------------------------------------------------*/
 
@@ -287,12 +287,15 @@ ERROR_STEP0:
 };
  /*-------------------------------------------------------------------------------*/
 
+
  /*
   *	We need just to say system we no longer need this GPIO port
   */
 void deInitLed(unsigned long int portLEDNumber){
 	gpio_free(portLEDNumber);
 }
+/*-------------------------------------------------------------------------------*/
+
 
 
  /*
@@ -379,6 +382,8 @@ ERROR_STEP0_1:
 };
  /*-------------------------------------------------------------------------------*/
 
+
+
  /*
   *Say to system - no longer our IRQ handlers and no longer need this GPIO
   */
@@ -393,9 +398,11 @@ void deInitButtons(unsigned long int  portButton1Number, unsigned long int portB
  /*-------------------------------------------------------------------------------*/
 
 
-/*
- * 
- */
+
+
+ /*
+  * 
+  */
 static int __init init_routine(void){
 	printk( KERN_INFO "%s: initialization.\n", MODULE_NAME);
 	programmContext.usrled_val=1;
@@ -420,6 +427,8 @@ ERROR_STEP0:
 	return -1;
 }
  /*-------------------------------------------------------------------------------*/
+
+
 
  /*
   * 

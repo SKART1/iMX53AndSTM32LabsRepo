@@ -12,7 +12,13 @@
 
 	#define WATCH_DOG_CONFIG_REGISTERS_BASE_ADDRESS	0x53F98000					
 	
-
+	#define WDOG_REGISTERS_TOTAL_LENGTH 10 //(see 5014)
+	#define WDOG_CONTROL_REGISTER_OFFSET_BYTES 0
+	#define WDOG_SERVICE_REGISTER_OFFSET_BYTES 2
+	#define WDOG_RESET_STATUS_REGISTER_OFFSET_BYTES 4
+	#define WDOG_INTERRUPT_CONTROL_REGISTER_OFFSET_BYTES 6
+	#define WDOG_MISCELLANEOUS_CONTROL_REGISTER 8
+	
 	
 	
 	//WATCHDOG configure register bits description
@@ -45,7 +51,7 @@
 	 /*Software Reset Signal. Controls the software assertion of the WDOG-generated reset signal wdog_rst .*/ 
 	 /*This bit automatically resets to "1" after it has been asserted to "0".*/
 	 /*NOTE: This bit does not generate the software reset to the block.*/
-	#define SRS_ASSERT_WDOG_RESET_SIGNAL			(0b0<<4)	/*Assert system reset signa*/
+	#define SRS_ASSERT_WDOG_RESET_SIGNAL			(0b0<<4)	/*Assert system reset signal*/
 	#define SRS_NO_ASSERT_WDOG_RESET_SIGNAL			(0b1<<4)	/*No effect on the system (Default)*/
 															
 		
@@ -78,6 +84,21 @@
 	#define WDZST_LOW_POWER_ENABLED					(0b1<<0)	/*Suspend the watchdog timer*/
 													
 
+													
+	/* WDOG Interrupt control register */
+	#define INTERRUPT_BEFORE_TIME_FIELD_OFFSET 8
+	
+	
+	#define WDOG_INTERRUPT_HAS_OCCURED (0b0<<14)		/* No interrupt has occurred (Default). */
+	#define WDOG_INTERRUPT_HAS_OCCURED (0b1<<14) 		/* Interrupt has occurred */
+
+	/*Watchdog Timer Interrupt enable bit. Reset value is 0.
+NOTE: This bit is a write once only bit. Once the software does a write access to this bit, it will get locked
+and cannot be reprogrammed till the next system reset assertion */
+	#define WDOG_INTERRUPT_DISABLED 		(0b0<<15)  /*Disable Interrupt (Default).*/
+	#define WDOG_INTERRUPT_ENABLED 		(0b1<<15)  /*Enable Interrupt */
+	
+	
 	//Functions
 	
 #endif /* WDOG_H_ */

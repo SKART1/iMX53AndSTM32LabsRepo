@@ -24,6 +24,8 @@
 	#define 	GPIO_USRBTN1 			46				//User button 1 on iMX53 starter board
 	#define 	GPIO_USRBTN2 			47				//User button 2 on iMX53 starter board
 
+	
+	
 
 	static int __init init_routine(void);
 	static void __exit exit_routine(void);

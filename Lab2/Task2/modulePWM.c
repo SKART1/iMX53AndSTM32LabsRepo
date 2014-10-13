@@ -21,7 +21,8 @@
 /*									Macro										 */	
 /*********************************************************************************/
 #define  SET_BITS(WHOM, WHAT)   \
-	WHOM|=(WHAT); 
+	WHOM&=(WHAT);				\   /*set this bits to zero first*/
+	WHOM|=(WHAT);					/*set necessary values*/ 
 
 #define CLEAR_BITS(WHOM,WHAT) \
 	WHOM&=~(WHAT);
@@ -89,7 +90,7 @@ static irqreturn_t irqEPITHandler(int irq, void *dev_id){
 		iowrite32(programmContext.modulusRegisterValueLEDHigh, ((char *)programmContext.EPITRegistersMapBegin)+LOAD_REGISTER_OFFSET_BYTES);
 	}
 	//Cleaning interupt bit in EPIT status register
-	iowrite32(ioread32(((char *)programmContext.EPITRegistersMapBegin)+STATUS_REGISTER_OFFSET_BYTES)|0x00000001,((char *)programmContext.EPITRegistersMapBegin)+4);
+	iowrite32(ioread32(((char *)programmContext.EPITRegistersMapBegin)+STATUS_REGISTER_OFFSET_BYTES)|0x00000001,((char *)programmContext.EPITRegistersMapBegin)+STATUS_REGISTER_OFFSET_BYTES);
 	return( IRQ_HANDLED );
 }
 /*===============================================================================*/
@@ -166,7 +167,6 @@ int initEPITForPWMAndStart(){
 	programmContext.EPITRegistersMapBegin=ioremap(EPIT_CONFIG_REG_BASE_ADRESS,  EPIT_CONFIG_REG_TOTAL_LENGTH);	
 
 	//Write EPIT config register
-	//TODO add offsets of registers in EPIT.h
 	iowrite32(EPIT1_EPITCR, programmContext.EPITRegistersMapBegin+CONTROL_REGISTER_OFFSET_BYTES);
 
 	//Compare register is set to zero: because of algorythm

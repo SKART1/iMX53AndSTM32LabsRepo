@@ -79,22 +79,22 @@
 	 /*
 	  *Determines the operation of the WDOG-1 during DEBUG mode. This bit is write once-only
       */											
-	#define WDBG_DEBUG_DISABLED						(0b0<<1)		/*Continue WDOG-1 timer operation (Default)*/
-	#define WDBG_DEBUG_ENABLED						(0b1<<1)		/*Suspend the watchdog timer*/
+	#define WDBG_DEBUG_DISABLED						(0b1<<1)		/*Continue WDOG-1 timer operation (Default)*/
+	#define WDBG_DEBUG_ENABLED						(0b0<<1)		/*Suspend the watchdog timer*/
 												
 	 /*
 	  *Watchdog Low Power. Determines the operation of the WDOG-1 during low-power modes.
 	  *This bit is write once-only												
 	  */
-	#define WDZST_LOW_POWER_DISABLED				(0b0<<0)		/*Continue timer operation (Default)*/
-	#define WDZST_LOW_POWER_ENABLED					(0b1<<0)		/*Suspend the watchdog timer*/
+	#define WDZST_LOW_POWER_DISABLED				(0b1<<0)		/*Continue timer operation (Default)*/
+	#define WDZST_LOW_POWER_ENABLED					(0b0<<0)		/*Suspend the watchdog timer*/
 													
 
 
 
 													
 	//WDOG_WICR WDOG-1 Interrupt control register 
-	#define INTERRUPT_BEFORE_TIME_FIELD_OFFSET 		8				/*Number of 0.5 seconds interval when interrupt will occure before watchdog fire*/
+	#define INTERRUPT_BEFORE_TIME_FIELD_OFFSET 		0				/*Number of 0.5 seconds interval when interrupt will occure before watchdog fire*/
 
 	#define WDOG_INTERRUPT_HAS_NOT_OCCURED 			(0b0<<14)		/* No interrupt has occurred (Default). */
 	#define WDOG_INTERRUPT_HAS_OCCURED 				(0b1<<14) 		/* Interrupt has occurred */
@@ -104,6 +104,6 @@
 
 
 	//WDOG_WMCR Miscellaneous Control Register
-	#define PDE_DISABLE_POWER_DOWN_COUNTER 			(0b0<<15)		/*Stop power down counter (which count for 16 seconds and after that reset the system)*/
+	#define PDE_DISABLE_POWER_DOWN_COUNTER 			(0b0<<0)		/*Stop power down counter (which count for 16 seconds and after that reset the system)*/
 	
 #endif /* WDOG_H_ */

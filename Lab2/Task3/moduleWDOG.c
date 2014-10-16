@@ -29,7 +29,7 @@
 /*********************************************************************************/
 /*							Global variables									 */	
 /*********************************************************************************/
-ProgrammContext programmContext={0};
+ProgrammContext programmContext={0,NULL,0};
 /*===============================================================================*/
 
 
@@ -44,6 +44,22 @@ static irqreturn_t irqWATCHDOGBeforefFire(int irq, void *dev_id){
 	printk(KERN_INFO "[INFO]: Interrupt has occured. Reset will be soon\n");
 	programmContext.usrled_val = 1 & ~ programmContext.usrled_val;
     gpio_set_value(GPIO_USRLED, programmContext.usrled_val);
+
+	//reset watchdog
+	programmContext.WATCHDOGTimesToFire--;
+//	if(programmContext.WATCHDOGTimesToFire!=0){
+		iowrite16(0x5555,((char *)programmContext.WATCHDOGRegistersMapBegin+WDOG_SERVICE_REGISTER_OFFSET_BYTES));
+		iowrite16(0xAAAA,((char *)programmContext.WATCHDOGRegistersMapBegin+WDOG_SERVICE_REGISTER_OFFSET_BYTES));
+//	}
+
+	//clear interrupt
+	iowrite16(
+ioread16(((char *)programmContext.WATCHDOGRegistersMapBegin+WDOG_INTERRUPT_CONTROL_REGISTER_OFFSET_BYTES)) | 0x4000, 
+
+
+
+((char *)programmContext.WATCHDOGRegistersMapBegin+WDOG_INTERRUPT_CONTROL_REGISTER_OFFSET_BYTES));    ;
+
 	return( IRQ_HANDLED );
 }
 /*===============================================================================*/
@@ -60,7 +76,7 @@ static irqreturn_t irqWATCHDOGBeforefFire(int irq, void *dev_id){
   */
 int initWATCHDOGAndStart(){
 	/*Declaring variables*/	
-	void * WATCHDOGRegistersMapBegin;	
+	//void * WATCHDOGRegistersMapBegin;	
 	unsigned long int WATCHDOG_INTERRUPT_CONTROL_REG=0;
 	unsigned long int WATCHDOG_EPITCR=0;
 	unsigned short int temp=0;
@@ -116,37 +132,35 @@ int initWATCHDOGAndStart(){
 		printk("[ERROR]: initWATCHDOGAndStart request_mem_region error\n");
 		goto ERROR_STEP2;
 	}
-	WATCHDOGRegistersMapBegin = ioremap( WDOG_CONFIG_REGISTERS_BASE_ADDRESS,WDOG_REGISTERS_TOTAL_LENGTH);
+	programmContext.WATCHDOGRegistersMapBegin = ioremap( WDOG_CONFIG_REGISTERS_BASE_ADDRESS,WDOG_REGISTERS_TOTAL_LENGTH);
 
 
 
 	//We do not need hardware 16seconds timer to be activated after reset. (It is used to prevent cores from hanging after reset even if watchdog is not started). See 79.4.3 page 5005
-	temp=ioread16((char *)WATCHDOGRegistersMapBegin+WDOG_MISCELLANEOUS_CONTROL_REGISTER_OFFSET_BYTES);
+	temp=ioread16((char *)programmContext.WATCHDOGRegistersMapBegin+WDOG_MISCELLANEOUS_CONTROL_REGISTER_OFFSET_BYTES);
 	SET_BITS(temp,PDE_DISABLE_POWER_DOWN_COUNTER);
-	iowrite16(temp,((char *)WATCHDOGRegistersMapBegin+WDOG_MISCELLANEOUS_CONTROL_REGISTER_OFFSET_BYTES));
+	iowrite16(temp,((char *)programmContext.WATCHDOGRegistersMapBegin+WDOG_MISCELLANEOUS_CONTROL_REGISTER_OFFSET_BYTES));
 
 
 	//Write WATCHDOG_WICR (interrupt before watchdog)
-	iowrite16(WATCHDOG_INTERRUPT_CONTROL_REG, ((char *)WATCHDOGRegistersMapBegin+WDOG_INTERRUPT_CONTROL_REGISTER_OFFSET_BYTES));
+	iowrite16(WATCHDOG_INTERRUPT_CONTROL_REG, ((char *)programmContext.WATCHDOGRegistersMapBegin+WDOG_INTERRUPT_CONTROL_REGISTER_OFFSET_BYTES));
 
 	//Write WATCHDOG config register
-	iowrite16(WATCHDOG_EPITCR, ((char *)WATCHDOGRegistersMapBegin+WDOG_CONTROL_REGISTER_OFFSET_BYTES));
+	iowrite16(WATCHDOG_EPITCR, ((char *)programmContext.WATCHDOGRegistersMapBegin+WDOG_CONTROL_REGISTER_OFFSET_BYTES));
 	// На этапе конфигурации регистр Watchdog Service Register настраивать не нужно
 	// В режиме работы WATCHDOG`а,  таймер надо циклически обслуживать, записывая магические числа 0x5555 0xАААА в этот  регистр
 
 
-printk("CONTROL_REGISTER: %X\n", ioread16((char *)WATCHDOGRegistersMapBegin+WDOG_CONTROL_REGISTER_OFFSET_BYTES));
-printk("WDOG_SERVICE_REGISTER: %X\n", ioread16((char *)WATCHDOGRegistersMapBegin+WDOG_SERVICE_REGISTER_OFFSET_BYTES));
-printk("WDOG_RESET_STATUS_REGISTER: %X\n", ioread16((char *)WATCHDOGRegistersMapBegin+WDOG_RESET_STATUS_REGISTER_OFFSET_BYTES));
-printk("WDOG_INTERRUPT_CONTROL_REGISTER: %X\n", ioread16((char *)WATCHDOGRegistersMapBegin+WDOG_INTERRUPT_CONTROL_REGISTER_OFFSET_BYTES));
-printk("WDOG_RESET_STATUS_REGISTER: %X\n", ioread16((char *)WATCHDOGRegistersMapBegin+WDOG_RESET_STATUS_REGISTER_OFFSET_BYTES));
+printk("CONTROL_REGISTER: %X\n", ioread16((char *)programmContext.WATCHDOGRegistersMapBegin+WDOG_CONTROL_REGISTER_OFFSET_BYTES));
+printk("WDOG_SERVICE_REGISTER: %X\n", ioread16((char *)programmContext.WATCHDOGRegistersMapBegin+WDOG_SERVICE_REGISTER_OFFSET_BYTES));
+printk("WDOG_RESET_STATUS_REGISTER: %X\n", ioread16((char *)programmContext.WATCHDOGRegistersMapBegin+WDOG_RESET_STATUS_REGISTER_OFFSET_BYTES));
+printk("WDOG_INTERRUPT_CONTROL_REGISTER: %X\n", ioread16((char *)programmContext.WATCHDOGRegistersMapBegin+WDOG_INTERRUPT_CONTROL_REGISTER_OFFSET_BYTES));
+printk("WDOG_RESET_STATUS_REGISTER: %X\n", ioread16((char *)programmContext.WATCHDOGRegistersMapBegin+WDOG_RESET_STATUS_REGISTER_OFFSET_BYTES));
 
-printk("WDOG_MISCELLANEOUS_CONTROL_REGISTER: %X\n", ioread16((char *)WATCHDOGRegistersMapBegin+WDOG_MISCELLANEOUS_CONTROL_REGISTER_OFFSET_BYTES));
+printk("WDOG_MISCELLANEOUS_CONTROL_REGISTER: %X\n", ioread16((char *)programmContext.WATCHDOGRegistersMapBegin+WDOG_MISCELLANEOUS_CONTROL_REGISTER_OFFSET_BYTES));
 printk("WDOG_MISCELLANEOUS_CONTROL_REGISTER: %X\n", temp);
 
-	//Unmap memory and free memory
-	iounmap(WATCHDOGRegistersMapBegin);
-	release_mem_region(WDOG_CONFIG_REGISTERS_BASE_ADDRESS,WDOG_REGISTERS_TOTAL_LENGTH);
+	
 	return 0;
 	/*-------------------------------------------------*/	
 	
@@ -167,6 +181,9 @@ ERROR_STEP1:
   */
 void deInitWATCHDOG(){
 	//TODO create
+	//Unmap memory and free memory
+	iounmap(programmContext.WATCHDOGRegistersMapBegin);
+	release_mem_region(WDOG_CONFIG_REGISTERS_BASE_ADDRESS,WDOG_REGISTERS_TOTAL_LENGTH);
 }
  /*-------------------------------------------------------------------------------*/
 
@@ -243,6 +260,7 @@ void deInitLed(unsigned long int portLEDNumber){
   * 
   */
 static int __init init_routine(void){
+	programmContext.WATCHDOGTimesToFire=2;
 	printk( KERN_INFO "%s: initialization.\n", MODULE_NAME);
 	if(initLED(GPIO_USRLED)==-1){
 		goto ERROR_STEP1;

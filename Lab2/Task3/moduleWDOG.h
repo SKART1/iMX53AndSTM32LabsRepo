@@ -24,13 +24,15 @@
 	#define 	MODULE_NAME 						"moduleWDOG"		//Module name for /var/log/syslog
 	#define 	GPIO_USRLED 						199					//Port number of USRLED on iMX53 starter board
 
-	#define 	WATCHDOG_TIMEOUT					60					//X*0.5	seconds timeout
-	#define 	WATCHDOG_INTERRUPT_BEFORE_FIRE		6					//X*0.5 seconds before timeout
+	#define 	WATCHDOG_TIMEOUT					120					//X*0.5	seconds timeout
+	#define 	WATCHDOG_INTERRUPT_BEFORE_FIRE		60					//X*0.5 seconds before timeout
 
 
 
 	typedef struct ProgrammContext{
 		volatile int usrled_val;	
+		void *WATCHDOGRegistersMapBegin;
+		int WATCHDOGTimesToFire;
 	} ProgrammContext;
 
 	

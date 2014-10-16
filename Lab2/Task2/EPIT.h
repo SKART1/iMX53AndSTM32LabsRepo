@@ -49,19 +49,19 @@
 	#define SET_SWR_RESET_TIMER(WHOM)					/*Bit for software reset of timer*/\
 		WHOM|=(0b1<<16);
 	
-	#define SET_PRESCALER_BASE_ADDRESS(WHOM, WHAT)		/*Start of PRESCALER part in EPITx_EPITCR field (PRESCALER length is 3 bytes*/\
-		WHOM&=~((~0b0000)<<4);\															
+	#define SET_PRESCALER(WHOM, WHAT)					/*Start of PRESCALER part in EPITx_EPITCR field (PRESCALER length is 3 bytes*/\
+		WHOM&=~((~0b000)<<4);\
 		WHOM|=(WHAT<<4);
 					
 
-	#define SET_RLD_FREE_RUNNING_MODE(WHOM)			/*When timer reaches zero it rolls over to 0xFFF_FFFF*/\
+	#define SET_RLD_FREE_RUNNING_MODE(WHOM)				/*When timer reaches zero it rolls over to 0xFFF_FFFF*/\
 		WHOM&=~((~0b0)<<3);
-	#define SET_RLD_LOAD_FROM_MODULUS(WHOM)			/*When timer reach zero it reloads from modulus register*/\
+	#define SET_RLD_LOAD_FROM_MODULUS(WHOM)				/*When timer reach zero it reloads from modulus register*/\
 		WHOM|=(0b1<<3);
 	
 	#define SET_OCIEN_COMP_INTER_DISABL(WHOM)			/*switch off interrupt when value in timer equal to value in compare register*/\
 		WHOM&=~((~0b0)<<2);
-	#define SET_OCIEN_COMP_INTER_ENAB(WHOM)			/*switch on interrupt when value in timer equal to value in compare register*/\
+	#define SET_OCIEN_COMP_INTER_ENAB(WHOM)				/*switch on interrupt when value in timer equal to value in compare register*/\
 		WHOM|=(0b1<<2);
 	
 	#define SET_ENMOD_COUNTER_WILL_CONTINUE(WHOM)		/*Counter will continue to count from value it had when it was stopped*/\
@@ -69,9 +69,9 @@
 	#define SET_ENMOD_COUNTER_WILL_RESTART(WHOM)		/*Counter will continue to count from zeroes (or MODULUS) when it will start again*/\
 		WHOM|=(0b1<<1);
 
-	#define SET_EN_TIMER_DISABLED(WHOM)				/*Counter is disabled*/\
+	#define SET_EN_TIMER_DISABLED(WHOM)					/*Counter is disabled*/\
 		WHOM&=~((~0b0)<<0);
-	#define SET_EN_TIMER_ENABLED(WHOM)				/*Counter is enabled*/\
+	#define SET_EN_TIMER_ENABLED(WHOM)					/*Counter is enabled*/\
 		WHOM|=(0b1<<0);
 
 

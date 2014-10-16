@@ -129,26 +129,26 @@ int initEPITForPWMAndStart(){
 	//Clock source is 32 kHZ oscillator	
 	SET_CLKSRC_LOW_FREQUENCY_CLOCK(EPIT1_EPITCR);
 	//No actions are neccessary on output pins(?!)
-	SET_BITS(EPIT1_EPITCR, OM_EPIT_DISCONNECTED);
+	SET_OM_EPIT_DISCONNECTED(EPIT1_EPITCR);
 	//Timer will work even in STOP state of system
-	SET_BITS(EPIT1_EPITCR, STOPEN_ENABLED);
+	SET_STOPEN_ENABLED(EPIT1_EPITCR);
 	//Timer will work even in WAIT state of system
-	SET_BITS(EPIT1_EPITCR,WAITEN_ENABLED);
+	SET_WAITEN_ENABLED(EPIT1_EPITCR);
 	//Timer will work even in DEBUG state of system
-	SET_BITS(EPIT1_EPITCR,DBGEN_ENABLED);
+	SET_DBGEN_ENABLED(EPIT1_EPITCR);
 	//Timer counter register will be immideatelly set to value in MODULUS register if it is changed
-	SET_BITS(EPIT1_EPITCR,IOVW_COUNTER_OVERRITEN);
+	SET_IOVW_COUNTER_OVERRITEN(EPIT1_EPITCR);
 	//Prescaller equals to 1 - means now prescale
-	SET_BITS(EPIT1_EPITCR,(PRESCALER<<PRESCALER_BASE_ADDRESS));
+	SET_PRESCALER(EPIT1_EPITCR,PRESCALER);
 	//Timer will reload it`s value from modulus register - really do not used. We will overite MODULUS value manually 
 	//when timer will reach zero and because of "SET_BITS(EPIT1_EPITCR,IOVW_COUNTER_OVERRITEN);" above 
-	SET_BITS(EPIT1_EPITCR,RLD_LOAD_FROM_MODULUS);
+	SET_RLD_LOAD_FROM_MODULUS(EPIT1_EPITCR);
 	//Switch on interrupts caused by equality of timer value and compare registers
-	SET_BITS(EPIT1_EPITCR,OCIEN_COMP_INTER_ENAB);
+	SET_OCIEN_COMP_INTER_ENAB(EPIT1_EPITCR);
 	//Counter will continue from previous values if it will be paused
-	SET_BITS(EPIT1_EPITCR,ENMOD_COUNTER_WILL_CONTINUE);
+	SET_ENMOD_COUNTER_WILL_CONTINUE(EPIT1_EPITCR);
 	//Timer is immediatelly switch on
-	SET_BITS(EPIT1_EPITCR,EN_TIMER_ENABLED);
+	SET_EN_TIMER_ENABLED(EPIT1_EPITCR);
 	/*-------------------------------------------------*/
 
 
@@ -227,7 +227,7 @@ void deInitEPIT(){
 	//Timer is immediatelly switch on
 	unsigned long int EPIT1_EPITCR=0;
 
-	SET_BITS(EPIT1_EPITCR,EN_TIMER_DISABLED);
+	SET_EN_TIMER_DISABLED(EPIT1_EPITCR);
 	//Write EPIT config register
 	iowrite32(EPIT1_EPITCR, ((char *)programmContext.EPITRegistersMapBegin)+CONTROL_REGISTER_OFFSET_BYTES);
 	/*-------------------------------------------------*/

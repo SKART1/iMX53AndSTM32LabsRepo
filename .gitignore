@@ -29,17 +29,19 @@
 
 #Eclipse
 .metadata
-/Lab2/.cproject
-/Lab2/.project
-/Lab2/.settings/*.*
-Lab2/.built-in.o.cmd
+.cproject
+.project
+.settings/*.*
+
 
 #WTF?!
 /RemoteSystemsTempFiles/*.*
-/Lab2/*.cmd
-/Lab2/*.symvers
-/Lab2/modules.order
-/Lab2/modulePWM.mod.c
+*.o.cmd
+*.cmd
+*.symvers
+*.order
+*.mod.c
+*.ko
 
 
 

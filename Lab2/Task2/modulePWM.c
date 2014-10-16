@@ -21,8 +21,8 @@
 /*									Macro										 */	
 /*********************************************************************************/
 #define  SET_BITS(WHOM, WHAT)   \
-	WHOM&=(WHAT);				\   /*set this bits to zero first*/
-	WHOM|=(WHAT);					/*set necessary values*/ 
+	WHOM&=~(WHAT);	/*set this bits to zero first*/ 	\
+	WHOM|=(WHAT);	/*set necessary values*/ 		
 
 #define CLEAR_BITS(WHOM,WHAT) \
 	WHOM&=~(WHAT);
@@ -159,7 +159,7 @@ int initEPITForPWMAndStart(){
 
 	/*Write settings to device*/	
 	//EPIT settings
-	if(request_mem_region(BASE_ADRESS,REGISTERS_TOTAL_LENGTH, "EPIT")==NULL){
+	if(request_mem_region(EPIT_CONFIG_REG_BASE_ADRESS,EPIT_CONFIG_REG_TOTAL_LENGTH, "EPIT")==NULL){
 		printk("[ERROR]: request_mem_region error\n");
 		goto ERROR_STEP1;
 	}	
@@ -167,7 +167,7 @@ int initEPITForPWMAndStart(){
 	programmContext.EPITRegistersMapBegin=ioremap(EPIT_CONFIG_REG_BASE_ADRESS,  EPIT_CONFIG_REG_TOTAL_LENGTH);	
 
 	//Write EPIT config register
-	iowrite32(EPIT1_EPITCR, programmContext.EPITRegistersMapBegin+CONTROL_REGISTER_OFFSET_BYTES);
+	iowrite32(EPIT1_EPITCR, ((char *)programmContext.EPITRegistersMapBegin)+CONTROL_REGISTER_OFFSET_BYTES);
 
 	//Compare register is set to zero: because of algorythm
 	iowrite32(0L, ((char *)programmContext.EPITRegistersMapBegin)+COMPARE_REGISTER_OFFSET_BYTES);
@@ -185,7 +185,7 @@ int initEPITForPWMAndStart(){
 	};	
 	//Enable IRQ
 	//TODO check if it is needed to disable IRQ...
-	enable_irq(EPIT_IRQ_NUMBER);
+	//enable_irq(EPIT_IRQ_NUMBER);
 
 
 
@@ -197,18 +197,17 @@ int initEPITForPWMAndStart(){
 	}	
 	clockControllerMemoryMapping=ioremap(0x53FD4070, 4);
 	//Clock settings
-	iowrite32(ioread32(test)|0x0000000C,test);
+	iowrite32(ioread32(clockControllerMemoryMapping)|0x0000000C,clockControllerMemoryMapping);
 	//unmap memory
-	iounmap(test);
+	iounmap(clockControllerMemoryMapping);
 	release_mem_region(0x53FD4070, 4);
-
 	return 0;
 
 
 	
 ERROR_STEP3:
+	//disable_irq(EPIT_IRQ_NUMBER);	
 	free_irq(EPIT_IRQ_NUMBER,MODULE_NAME); 
-	disable_irq(EPIT_IRQ_NUMBER);	
 ERROR_STEP2:
 	iounmap(programmContext.EPITRegistersMapBegin);
 	release_mem_region(EPIT_CONFIG_REG_BASE_ADRESS,  EPIT_CONFIG_REG_TOTAL_LENGTH);
@@ -230,8 +229,18 @@ void deInitEPIT(){
 	//TODO: Stop timer
 	//TODO check if it is needed to disable IRQ...
 
-	free_irq(EPIT_IRQ_NUMBER,MODULE_NAME); 
-	disable_irq(EPIT_IRQ_NUMBER);
+	//Timer is immediatelly switch on
+	unsigned long int EPIT1_EPITCR=0;
+
+	SET_BITS(EPIT1_EPITCR,EN_TIMER_DISABLED);
+	//Write EPIT config register
+	iowrite32(EPIT1_EPITCR, ((char *)programmContext.EPITRegistersMapBegin)+CONTROL_REGISTER_OFFSET_BYTES);
+	/*-------------------------------------------------*/
+
+
+
+	//disable_irq(EPIT_IRQ_NUMBER);
+	free_irq(EPIT_IRQ_NUMBER,NULL); 
 	iounmap(programmContext.EPITRegistersMapBegin);
 	release_mem_region(EPIT_CONFIG_REG_BASE_ADRESS,  EPIT_CONFIG_REG_TOTAL_LENGTH);
 }
@@ -355,10 +364,13 @@ int initButtons(unsigned long int  portButton1Number, unsigned long int  portBut
 	};
 
 	//Set irq handler to function  usrBtn1IRQHandler
+	//enable_irq(programmContext.usrBtn1IRQNumber);
 	if(request_irq(programmContext.usrBtn1IRQNumber,(*usrBtn1IRQHandler),IRQF_TRIGGER_FALLING,MODULE_NAME,NULL)!=0){
 		printk(KERN_INFO "[ERROR]: %s: initButtons 1 request_irq\n", MODULE_NAME);
 		goto ERROR_STEP4_1;
 	};
+
+	//enable_irq(programmContext.usrBtn2IRQNumber);
 	if(request_irq(programmContext.usrBtn2IRQNumber,(*usrBtn2IRQHandler),IRQF_TRIGGER_FALLING,MODULE_NAME,NULL)!=0){
 		printk(KERN_INFO "[ERROR]: %s: initButtons 2 request_irq\n", MODULE_NAME);
 		goto ERROR_STEP4_2;
@@ -367,7 +379,7 @@ int initButtons(unsigned long int  portButton1Number, unsigned long int  portBut
 
 ERROR_STEP4_2:
 	free_irq(programmContext.usrBtn1IRQNumber, NULL);
-ERROR_STEP4_1;
+ERROR_STEP4_1:
 ERROR_STEP3_1:  	
 ERROR_STEP3_2:  
 ERROR_STEP2_2:   
@@ -389,7 +401,10 @@ ERROR_STEP0_1:
   */
 void deInitButtons(unsigned long int  portButton1Number, unsigned long int portButton2Number){
 	//delete IRQ`s	
+	//disable_irq(programmContext.usrBtn1IRQNumber);
     free_irq(programmContext.usrBtn1IRQNumber, NULL);
+
+	//disable_irq(programmContext.usrBtn2IRQNumber);
     free_irq(programmContext.usrBtn2IRQNumber, NULL);
 	//Say to kernel "We no longer use gpio`s"
 	gpio_free(portButton1Number);	
@@ -405,7 +420,7 @@ void deInitButtons(unsigned long int  portButton1Number, unsigned long int portB
   */
 static int __init init_routine(void){
 	printk( KERN_INFO "%s: initialization.\n", MODULE_NAME);
-	programmContext.usrled_val=1;
+	programmContext.usrled_val=0;
 
 	if(initLED(GPIO_USRLED)!=0){
 		goto ERROR_STEP0;
@@ -434,9 +449,18 @@ ERROR_STEP0:
   * 
   */
 static void __exit exit_routine(void){
-	deInitEPIT();
+	
 	deInitButtons(GPIO_USRBTN1, GPIO_USRBTN2);
+	printk( KERN_INFO "[INFO]: deInitButtons\n");
+
 	deInitLed(GPIO_USRLED);
+	printk( KERN_INFO "[INFO]: deInitLED\n");
+
+
+
+	deInitEPIT();
+	
+
 	printk(KERN_INFO "[INFO]: %s: stopped.\n", MODULE_NAME);
 }
  /*-------------------------------------------------------------------------------*/

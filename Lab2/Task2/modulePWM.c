@@ -20,9 +20,7 @@
 /*********************************************************************************/
 /*									Macro										 */	
 /*********************************************************************************/
-#define  SET_BITS(WHOM, WHAT)   \
-	WHOM&=~(WHAT);	/*set this bits to zero first*/ 	\
-	WHOM|=(WHAT);	/*set necessary values*/ 		
+
 /*===============================================================================*/
 
 
@@ -129,7 +127,7 @@ int initEPITForPWMAndStart(){
 
 	//EPIT control register
 	//Clock source is 32 kHZ oscillator	
-	SET_BITS(EPIT1_EPITCR, CLKSRC_LOW_FREQUENCY_CLOCK);
+	SET_CLKSRC_LOW_FREQUENCY_CLOCK(EPIT1_EPITCR);
 	//No actions are neccessary on output pins(?!)
 	SET_BITS(EPIT1_EPITCR, OM_EPIT_DISCONNECTED);
 	//Timer will work even in STOP state of system

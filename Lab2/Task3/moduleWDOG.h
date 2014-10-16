@@ -9,6 +9,8 @@
 #ifndef MODULEWDOG_H_
 #define MODULEWDOG_H_
 
+
+
 	/*********************************************************************************/
 	/*				Obligatory constants for module building 						 */
 	/*				          licence and author									 */	

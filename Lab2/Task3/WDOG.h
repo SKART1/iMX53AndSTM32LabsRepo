@@ -10,7 +10,7 @@
 #define WDOG_H_
 
 	//Control registers base adresses see page 5014
-	#define WATCH_DOG_CONFIG_REGISTERS_BASE_ADDRESS				0x53F98000		
+	#define WDOG_CONFIG_REGISTERS_BASE_ADDRESS					0x53F98000		
 	#define WDOG_REGISTERS_TOTAL_LENGTH 						10 
 	#define WDOG_CONTROL_REGISTER_OFFSET_BYTES					0
 	#define WDOG_SERVICE_REGISTER_OFFSET_BYTES 					2
@@ -19,7 +19,7 @@
 	#define WDOG_MISCELLANEOUS_CONTROL_REGISTER_OFFSET_BYTES 	8
 	
 	//Interrupt before fire	
-	//#define WATCHDOG_BEFORE_FIRE_IRQ_NUMBER
+	#define WATCHDOG_BEFORE_FIRE_IRQ_NUMBER						58
 	
 	//WATCHDOG configure register bits description
 	 /*

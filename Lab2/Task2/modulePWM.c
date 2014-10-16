@@ -23,9 +23,6 @@
 #define  SET_BITS(WHOM, WHAT)   \
 	WHOM&=~(WHAT);	/*set this bits to zero first*/ 	\
 	WHOM|=(WHAT);	/*set necessary values*/ 		
-
-#define CLEAR_BITS(WHOM,WHAT) \
-	WHOM&=~(WHAT);
 /*===============================================================================*/
 
 

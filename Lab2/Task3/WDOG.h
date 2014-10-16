@@ -36,28 +36,36 @@
 	  *  0x03 - 2.0 Seconds.
 	  *  0xff - 128 Seconds.
 	  */
-	#define WT_TIME_OUT_FIELD_OFFSET				8	
+	#define SET_WT_TIME_OUT(WHOM,WHAT) \
+		WHOM&=~((~0b00)<<8);\
+		WHOM|=(WHAT<<8);					
 
 	 /*
 	  *Watchdog Disable for Wait. This bit determines the operation of WDOG-1 during Low Power WAIT mode.
 	  *This is a write once only bit.
 	  */
-	#define WDW_AT_WAIT_CONTINUE					(0b0<<7)		/*Continue WDOG-1 timer operation (Default).*/
-	#define WDW_AT_WAIT_SUSPEND						(0b1<<7)		/*Suspend WDOG-1 timer operation.*/
+	#define SET_WDW_AT_WAIT_CONTINUE(WHOM)				/*Continue WDOG-1 timer operation (Default).*/\
+		WHOM&=~((~0b0)<<7);
+	#define SET_WDW_AT_WAIT_SUSPEND(WHOM)				/*Suspend WDOG-1 timer operation.*/\
+		WHOM|=(0b1<<7);
 
 	 /*
 	  *WDOG assertion. Controls the software assertion of the WDOG signal.
 	  */
-	#define WDA_ASSERT_WDOG_SIGNAL					(0b0<<5)		/*Assert WDOG output.*/
-	#define WDA_NO_ASSERT_WDOG_SIGNAL				(0b1<<5)		/*No effect on system (Default)*/
+	#define SET_WDA_ASSERT_WDOG_SIGNAL(WHOM)				/*Assert WDOG output.*/\
+		WHOM&=~((~0b0)<<5);
+	#define SET_WDA_NO_ASSERT_WDOG_SIGNAL(WHOM)				/*No effect on system (Default)*/\
+		WHOM|=(0b1<<5);
 								
 	 /*
 	  *Software Reset Signal. Controls the software assertion of the WDOG-generated reset signal wdog_rst. 
 	  *This bit automatically resets to "1" after it has been asserted to "0".
 	  *NOTE: This bit does not generate the software reset to the block.
 	  */
-	#define SRS_ASSERT_WDOG_RESET_SIGNAL			(0b0<<4)		/*Assert system reset signal*/
-	#define SRS_NO_ASSERT_WDOG_RESET_SIGNAL			(0b1<<4)		/*No effect on the system (Default)*/
+	#define SET_SRS_ASSERT_WDOG_RESET_SIGNAL(WHOM)			/*Assert system reset signal*/\
+		WHOM&=~((~0b0)<<4);
+	#define SET_SRS_NO_ASSERT_WDOG_RESET_SIGNAL(WHOM)		/*No effect on the system (Default)*/\
+		WHOM|=(0b1<<4);
 															
 	 /*
 	  *WDOG Time-out assertion. Determines if the WDOG gets asserted upon a Watchdog Time-out Event.
@@ -65,45 +73,60 @@
 	  *NOTE: There is no effect on wdog_rst (WDOG Reset) upon writing on this bit. WDOG gets asserted
 	  *along with wdog_rst if this bit is set.
 	  */
-	#define WDT_TIMEOUT_ASSERTION_DISABLED			(0b0<<3)		/*No effect on WDOG (Default)*/
-	#define WDT_TIMEOUT_ASSERTION_ENABLED			(0b1<<3)		/*Assert WDOG upon a Watchdog Time-out event*/
+	#define SET_WDT_TIMEOUT_ASSERTION_DISABLED(WHOM)		/*No effect on WDOG (Default)*/\
+		WHOM&=~((~0b0)<<3);
+	#define SET_WDT_TIMEOUT_ASSERTION_ENABLED(WHOM)			/*Assert WDOG upon a Watchdog Time-out event*/\
+		WHOM|=(0b1<<3);
 														
 	 /*
 	  *Watchdog Enable. Enables or disables the WDOG-1 block. This is a write one once only bit. It is not
 	  *possible to clear this bit by a software write, once the bit is set
 	  *NOTE: This bit can be set/reset in debug mode (exception).
 	  */												
-	#define WDE_WATCHDOG_DISABLED					(0b0<<2)		/*Disable the Watchdog (Default)*/
-	#define WDE_WATCHDOG_ENABLED					(0b1<<2)		/*Enable the Watchdog.*/
+	#define SET_WDE_WATCHDOG_DISABLED(WHOM)					/*Disable the Watchdog (Default)*/\
+		WHOM&=~((~0b0)<<2);
+	#define SET_WDE_WATCHDOG_ENABLED(WHOM)					/*Enable the Watchdog.*/\
+		WHOM|=(0b1<<2);
 													
 	 /*
 	  *Determines the operation of the WDOG-1 during DEBUG mode. This bit is write once-only
       */											
-	#define WDBG_DEBUG_DISABLED						(0b1<<1)		/*Continue WDOG-1 timer operation (Default)*/
-	#define WDBG_DEBUG_ENABLED						(0b0<<1)		/*Suspend the watchdog timer*/
+	#define SET_WDBG_DEBUG_DISABLED(WHOM)					/*Continue WDOG-1 timer operation (Default)*/\
+		WHOM|=(0b1<<1);
+	#define SET_WDBG_DEBUG_ENABLED(WHOM)					/*Suspend the watchdog timer*/\
+		WHOM&=~((~0b0)<<1);
 												
 	 /*
 	  *Watchdog Low Power. Determines the operation of the WDOG-1 during low-power modes.
 	  *This bit is write once-only												
 	  */
-	#define WDZST_LOW_POWER_DISABLED				(0b1<<0)		/*Continue timer operation (Default)*/
-	#define WDZST_LOW_POWER_ENABLED					(0b0<<0)		/*Suspend the watchdog timer*/
+	#define SET_WDZST_LOW_POWER_DISABLED(WHOM)				/*Continue timer operation (Default)*/\
+		WHOM|=(0b1<<0);
+	#define SET_WDZST_LOW_POWER_ENABLED(WHOM)				/*Suspend the watchdog timer*/\
+		WHOM&=~((~0b0)<<0);
 													
 
 
 
 													
 	//WDOG_WICR WDOG-1 Interrupt control register 
-	#define INTERRUPT_BEFORE_TIME_FIELD_OFFSET 		0				/*Number of 0.5 seconds interval when interrupt will occure before watchdog fire*/
+	#define SET_INTERRUPT_TIMEOUT_BEFORE_FIRE(WHOM,WHAT)	/*Number of 0.5 seconds interval when interrupt will occure before watchdog fire*/\
+		WHOM&=~((~0b00)<<0);\
+		WHOM|=(WHAT<<0);	
 
-	#define WDOG_INTERRUPT_HAS_NOT_OCCURED 			(0b0<<14)		/* No interrupt has occurred (Default). */
-	#define WDOG_INTERRUPT_HAS_OCCURED 				(0b1<<14) 		/* Interrupt has occurred */
+	#define SET_WDOG_INTERRUPT_HAS_NOT_OCCURED(WHOM) 		/* No interrupt has occurred (Default). */\
+		WHOM&=~((~0b0)<<14);
+	#define SET_WDOG_INTERRUPT_HAS_OCCURED (WHOM)			/* Interrupt has occurred */\
+		WHOM|=(0b1<<14); 	
 
-	#define WDOG_INTERRUPT_DISABLED 				(0b0<<15)  		/*Disable Interrupt (Default).*/
-	#define WDOG_INTERRUPT_ENABLED 					(0b1<<15)  		/*Enable Interrupt */
+	#define SET_WDOG_INTERRUPT_DISABLED(WHOM) 				/*Disable Interrupt (Default).*/\
+		WHOM&=~((~0b0)<<15); 	
+	#define SET_WDOG_INTERRUPT_ENABLED(WHOM) 				/*Enable Interrupt */\
+		WHOM|=(0b1<<15); 
 
 
 	//WDOG_WMCR Miscellaneous Control Register
-	#define PDE_DISABLE_POWER_DOWN_COUNTER 			(0b0<<0)		/*Stop power down counter (which count for 16 seconds and after that reset the system)*/
+	#define SET_PDE_DISABLE_POWER_DOWN_COUNTER(WHOM)		/*Stop power down counter (which count for 16 seconds and after that reset the system)*/\
+		WHOM&=~((~0b0)<<0);
 	
 #endif /* WDOG_H_ */

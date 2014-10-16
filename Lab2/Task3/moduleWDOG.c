@@ -2,11 +2,7 @@
 /*									Headers										 */	
 /*********************************************************************************/
 //System headers
-#include <linux/module.h>
-#include <linux/interrupt.h>
-#include <linux/gpio.h>
-#include <linux/ioport.h>
-#include <asm/io.h>
+
 
 //User headers
 #include "moduleWDOG.h"	//Header with prototypes and constants
@@ -19,9 +15,7 @@
 /*********************************************************************************/
 /*									Macro										 */	
 /*********************************************************************************/
-#define  SET_BITS(WHOM, WHAT)   \
-	WHOM&=~(WHAT);			/*set this bits to zero first*/	\
-	WHOM|=(WHAT);			/*set necessary values*/		
+		
 /*===============================================================================*/
 
 
@@ -53,12 +47,7 @@ static irqreturn_t irqWATCHDOGBeforefFire(int irq, void *dev_id){
 //	}
 
 	//clear interrupt
-	iowrite16(
-ioread16(((char *)programmContext.WATCHDOGRegistersMapBegin+WDOG_INTERRUPT_CONTROL_REGISTER_OFFSET_BYTES)) | 0x4000, 
-
-
-
-((char *)programmContext.WATCHDOGRegistersMapBegin+WDOG_INTERRUPT_CONTROL_REGISTER_OFFSET_BYTES));    ;
+	iowrite16(ioread16(((char *)programmContext.WATCHDOGRegistersMapBegin+WDOG_INTERRUPT_CONTROL_REGISTER_OFFSET_BYTES)) | 0x4000, ((char *)programmContext.WATCHDOGRegistersMapBegin+WDOG_INTERRUPT_CONTROL_REGISTER_OFFSET_BYTES));    ;
 
 	return( IRQ_HANDLED );
 }
@@ -85,30 +74,30 @@ int initWATCHDOGAndStart(){
 	/*Initializing part*/
 	//WATCHDOG_WCR Main control register 
 	//set watchdog timeout. After which signals will be sended
-	SET_BITS(WATCHDOG_EPITCR, (WATCHDOG_TIMEOUT<<WT_TIME_OUT_FIELD_OFFSET));
+	SET_WT_TIME_OUT(WATCHDOG_EPITCR, WATCHDOG_TIMEOUT);	
 	//Let watchdog work in wait mode
-	SET_BITS(WATCHDOG_EPITCR,WDW_AT_WAIT_CONTINUE);
+	SET_WDW_AT_WAIT_CONTINUE(WATCHDOG_EPITCR);
 	//Software control of ~(WDOG-1) signal. If this bit is set we will programmatically generate low level of this signal
-	SET_BITS(WATCHDOG_EPITCR, WDA_NO_ASSERT_WDOG_SIGNAL);
+	SET_WDA_NO_ASSERT_WDOG_SIGNAL(WATCHDOG_EPITCR);
 	//Software control of ~(wdog_rst) signal. If this bit is set we will programmatically generate low level of this signal
-	SET_BITS(WATCHDOG_EPITCR, SRS_NO_ASSERT_WDOG_RESET_SIGNAL);
+	SET_SRS_NO_ASSERT_WDOG_RESET_SIGNAL(WATCHDOG_EPITCR);
 	//We do not need to set low level to signal ~(WDOG-1). See picture 79-4 on page 5008
-	SET_BITS(WATCHDOG_EPITCR, WDT_TIMEOUT_ASSERTION_DISABLED);
+	SET_WDT_TIMEOUT_ASSERTION_DISABLED(WATCHDOG_EPITCR);
 	//Enable WDOG
-	SET_BITS(WATCHDOG_EPITCR, WDE_WATCHDOG_ENABLED);
+	SET_WDE_WATCHDOG_ENABLED(WATCHDOG_EPITCR);
 	//Timer is working during debug mode
-	SET_BITS(WATCHDOG_EPITCR, WDBG_DEBUG_ENABLED);
+	SET_WDBG_DEBUG_ENABLED(WATCHDOG_EPITCR);
 	//Timer is working when low power 
-	SET_BITS(WATCHDOG_EPITCR, WDZST_LOW_POWER_ENABLED);
+	SET_WDZST_LOW_POWER_ENABLED(WATCHDOG_EPITCR);
 
 
 	//WDOG_WICR WDOG-1 Interrupt generation control register
 	//Set how long before fire interrupt will occure
-	SET_BITS(WATCHDOG_INTERRUPT_CONTROL_REG, (WATCHDOG_INTERRUPT_BEFORE_FIRE<<INTERRUPT_BEFORE_TIME_FIELD_OFFSET));
+	SET_INTERRUPT_TIMEOUT_BEFORE_FIRE(WATCHDOG_INTERRUPT_CONTROL_REG,WATCHDOG_INTERRUPT_BEFORE_FIRE);
 	//Clear the field that interrupt has occured (just in case)
-	SET_BITS(WATCHDOG_INTERRUPT_CONTROL_REG,WDOG_INTERRUPT_HAS_NOT_OCCURED);
+	SET_WDOG_INTERRUPT_HAS_NOT_OCCURED(WATCHDOG_INTERRUPT_CONTROL_REG);
 	//Enable interrupt from watchdog (it can be cleared till reset)
-	SET_BITS(WATCHDOG_INTERRUPT_CONTROL_REG, WDOG_INTERRUPT_ENABLED);
+	SET_WDOG_INTERRUPT_ENABLED(WATCHDOG_INTERRUPT_CONTROL_REG);
 	/*-------------------------------------------------*/	
 
 
@@ -127,18 +116,18 @@ int initWATCHDOGAndStart(){
 
 
 	/*Write settings to device*/	
-	//Request memory and map memory
+	//Request memory and map memory (memory already used by somebody!!!)
 	if(request_mem_region(WDOG_CONFIG_REGISTERS_BASE_ADDRESS,WDOG_REGISTERS_TOTAL_LENGTH, "WATCHDOGMyTest")&&0/*NULL*/){
 		printk("[ERROR]: initWATCHDOGAndStart request_mem_region error\n");
 		goto ERROR_STEP2;
 	}
-	programmContext.WATCHDOGRegistersMapBegin = ioremap( WDOG_CONFIG_REGISTERS_BASE_ADDRESS,WDOG_REGISTERS_TOTAL_LENGTH);
+	programmContext.WATCHDOGRegistersMapBegin = ioremap(WDOG_CONFIG_REGISTERS_BASE_ADDRESS,WDOG_REGISTERS_TOTAL_LENGTH);
 
 
 
 	//We do not need hardware 16seconds timer to be activated after reset. (It is used to prevent cores from hanging after reset even if watchdog is not started). See 79.4.3 page 5005
 	temp=ioread16((char *)programmContext.WATCHDOGRegistersMapBegin+WDOG_MISCELLANEOUS_CONTROL_REGISTER_OFFSET_BYTES);
-	SET_BITS(temp,PDE_DISABLE_POWER_DOWN_COUNTER);
+	SET_PDE_DISABLE_POWER_DOWN_COUNTER(temp);
 	iowrite16(temp,((char *)programmContext.WATCHDOGRegistersMapBegin+WDOG_MISCELLANEOUS_CONTROL_REGISTER_OFFSET_BYTES));
 
 
@@ -151,14 +140,14 @@ int initWATCHDOGAndStart(){
 	// В режиме работы WATCHDOG`а,  таймер надо циклически обслуживать, записывая магические числа 0x5555 0xАААА в этот  регистр
 
 
-printk("CONTROL_REGISTER: %X\n", ioread16((char *)programmContext.WATCHDOGRegistersMapBegin+WDOG_CONTROL_REGISTER_OFFSET_BYTES));
-printk("WDOG_SERVICE_REGISTER: %X\n", ioread16((char *)programmContext.WATCHDOGRegistersMapBegin+WDOG_SERVICE_REGISTER_OFFSET_BYTES));
-printk("WDOG_RESET_STATUS_REGISTER: %X\n", ioread16((char *)programmContext.WATCHDOGRegistersMapBegin+WDOG_RESET_STATUS_REGISTER_OFFSET_BYTES));
-printk("WDOG_INTERRUPT_CONTROL_REGISTER: %X\n", ioread16((char *)programmContext.WATCHDOGRegistersMapBegin+WDOG_INTERRUPT_CONTROL_REGISTER_OFFSET_BYTES));
-printk("WDOG_RESET_STATUS_REGISTER: %X\n", ioread16((char *)programmContext.WATCHDOGRegistersMapBegin+WDOG_RESET_STATUS_REGISTER_OFFSET_BYTES));
+	printk("CONTROL_REGISTER: %X\n", ioread16((char *)programmContext.WATCHDOGRegistersMapBegin+WDOG_CONTROL_REGISTER_OFFSET_BYTES));
+	printk("WDOG_SERVICE_REGISTER: %X\n", ioread16((char *)programmContext.WATCHDOGRegistersMapBegin+WDOG_SERVICE_REGISTER_OFFSET_BYTES));
+	printk("WDOG_RESET_STATUS_REGISTER: %X\n", ioread16((char *)programmContext.WATCHDOGRegistersMapBegin+WDOG_RESET_STATUS_REGISTER_OFFSET_BYTES));
+	printk("WDOG_INTERRUPT_CONTROL_REGISTER: %X\n", ioread16((char *)programmContext.WATCHDOGRegistersMapBegin+WDOG_INTERRUPT_CONTROL_REGISTER_OFFSET_BYTES));
+	printk("WDOG_RESET_STATUS_REGISTER: %X\n", ioread16((char *)programmContext.WATCHDOGRegistersMapBegin+WDOG_RESET_STATUS_REGISTER_OFFSET_BYTES));
 
-printk("WDOG_MISCELLANEOUS_CONTROL_REGISTER: %X\n", ioread16((char *)programmContext.WATCHDOGRegistersMapBegin+WDOG_MISCELLANEOUS_CONTROL_REGISTER_OFFSET_BYTES));
-printk("WDOG_MISCELLANEOUS_CONTROL_REGISTER: %X\n", temp);
+	printk("WDOG_MISCELLANEOUS_CONTROL_REGISTER: %X\n", ioread16((char *)programmContext.WATCHDOGRegistersMapBegin+WDOG_MISCELLANEOUS_CONTROL_REGISTER_OFFSET_BYTES));
+	printk("WDOG_MISCELLANEOUS_CONTROL_REGISTER: %X\n", temp);
 
 	
 	return 0;

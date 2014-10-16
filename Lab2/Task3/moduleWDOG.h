@@ -8,7 +8,12 @@
 
 #ifndef MODULEWDOG_H_
 #define MODULEWDOG_H_
-
+	//System headers
+	#include <linux/module.h>
+	#include <linux/interrupt.h>
+	#include <linux/gpio.h>
+	#include <linux/ioport.h>
+	#include <asm/io.h>
 
 
 	/*********************************************************************************/
@@ -18,7 +23,8 @@
 	MODULE_LICENSE ("GPL");
 	MODULE_DESCRIPTION ("Simple linux kernel module example.");
 	MODULE_AUTHOR ("Student");
-	/*-------------------------------------------------------------------------------*/
+	/*-------------------------------------------------------------------------------*/\
+	
 
 
 	#define 	MODULE_NAME 						"moduleWDOG"		//Module name for /var/log/syslog

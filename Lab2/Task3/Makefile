@@ -11,4 +11,9 @@ all: moduleWDOG.c
 	
 	
 clean:
-	rm -rf *.o *.ko
+	rm -rf *.o 
+	rm -rf *.ko
+	rm -rf ./.tmp_versions
+	rm -rf *.o.cmd
+	rm -rf .*.o.d
+	rm -rf .*.o.cmd

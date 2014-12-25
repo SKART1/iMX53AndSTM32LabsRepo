@@ -15,6 +15,11 @@
   #define LED_PIN       GPIO_Pin_6
 
 
+  #define BTN_RCC       RCC_AHB1Periph_GPIOG
+  #define BTN_PORT      GPIOG
+  #define BTN_PIN       GPIO_Pin_6
+
+
 #endif
 
 

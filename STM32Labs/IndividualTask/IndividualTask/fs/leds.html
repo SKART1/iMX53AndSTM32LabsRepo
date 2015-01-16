@@ -1,0 +1,66 @@
+<html>
+<head>
+<title>Веб сервер STM32</title>
+<meta charset="UTF-8" />
+</head>
+<style>    
+  BODY { color: black;  margin-left: 2%; font-family: "Open Sans"; font-size=75%}
+  table{ color: black;  font-family: "Open Sans"; font-size=100%} 
+  .heading_demo {
+    color: black;
+    font-weight: 500;
+    font-size: 20px;
+    text-align: center;
+	font-family: "Open Sans";
+	
+  }
+  .menuoption {
+    background-color : white;
+    color: black;
+    font-weight: 500;
+    font-size: 20px;
+    text-align: center;
+	font-family: "Open Sans";
+  }
+</style>
+</head>
+<body style="" lang="EN-US" link="black" vlink="black">
+<div class="heading_demo">Пример веб-сервера на STM32 (интернет-вещей)</div>
+<table width="100%" bgcolor="#FFFFFF">
+
+<tr>
+<td style="width : 15%">
+</td>
+<td style="width : 70%" align="center"><img src="images/header.jpg" border="0" height="200" width="950"/>
+</td>
+<td  style="width : 15%"></td>
+<tr>
+</table>
+
+<table width="100%" bgcolor="white">
+<tr>
+<td style="width : 25%"></td>
+<td id="opt1" class="menuoption"><a href="index.html">Главная</a></td>
+<td id="opt2" class="menuoption"><a href="leds.html">Управление светодиодами</a></td>
+<td id="opt3" class="menuoption"><a href="adc.shtml">Получение данных с АЦП</a></td>
+<td style="width : 25%"></td>
+<tr>
+</table>
+<br/>
+<br/>
+<div style="align-content:center; margin:0 200px 0 200px; width:600px;">
+&nbsp;&nbsp;&nbsp;&nbsp;Эта страница позволяет управлять 4-мя светодиодами LED1, LED2, LED3 и LED4 
+расположенными на отладочной плате. <!--To put on/off a LED you have to
+check/uncheck its corresponding checkbox. Then you have to click on
+"Send" button to submit the new LEDs state.-->
+<br><br><br>
+<form method="get" action="/leds.cgi" >
+<input value="1" name="led" type="checkbox">LED1<br>
+<input value="2" name="led" type="checkbox">LED2<br>
+<input value="3" name="led" type="checkbox">LED3<br>
+<input value="4" name="led" type="checkbox">LED4<br>
+<br>
+<input value="Send" type="submit">
+</form>
+</div>
+</body></html>

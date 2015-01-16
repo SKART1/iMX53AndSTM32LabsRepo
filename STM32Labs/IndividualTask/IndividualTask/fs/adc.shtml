@@ -1,0 +1,67 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1251">
+<meta charset="UTF-8" />
+<meta http-equiv="refresh" content="1">
+<title>Веб сервер STM32</title>
+</head>
+<style>  
+  BODY { color: black;  margin-left: 2%; font-family: Verdana, Arial, Helvetica, sans-serif; font-size=75%; font-family: "Open Sans";}
+  table{ color: black;  font-family: "Open Sans"; font-size=100%}  
+  .heading_demo {
+    color: black;
+    font-weight: 500;
+    font-size: 20px;
+	font-family: "Open Sans";
+    text-align: center;
+	
+  }
+  .menuoption {
+    background-color : white;
+    color: black;
+    font-weight: 500;
+    font-size: 20px;
+	font-family: "Open Sans";
+    text-align: center;
+  }
+</style>
+</head>
+<body style=""  link="black" vlink="black">
+<div class="heading_demo">Пример веб-сервера на STM32 (интернет-вещей)</div>
+<table width="100%" bgcolor="#FFFFFF">
+
+<tr>
+<td style="width : 15%">
+</td>
+<td style="width : 70%" align="center"><img src="images/header.jpg" border="0" height="200" width="950"/>
+</td>
+<td  style="width : 15%"></td>
+<tr>
+</table>
+
+<table width="100%" bgcolor="white">
+<tr>
+<td style="width : 25%"></td>
+<td id="opt1" class="menuoption"><a href="index.html">Главная</a></td>
+<td id="opt2" class="menuoption"><a href="leds.html">Управление светодиодами</a></td>
+<td id="opt3" class="menuoption"><a href="adc.shtml">Получение данных с АЦП</a></td>
+<td style="width : 25%"></td>
+<tr>
+</table>
+<div style="align-content:center; margin:0 200px 0 200px; width:600px;">
+<br><br>
+<span style="font-size: 14px; font-family: Verdana;">
+&nbsp;&nbsp;&nbsp;&nbsp;Эта страница позволяет получить значение с АЦП
+К АЦП подключен потенциометр, распологающийся на отладочной плате IAR-STM32F407ZG-SK.
+Отображаемое значение автоматически обновляется каждую секунду. 
+
+<br><br><br>
+<table border="0" cellpadding="5" cellspacing="1">
+<tr>
+<td style="font-size: 14px; font-family: Verdana;font-weight: bold;">ADC Converted Value: </td>
+<td style="font-size: 14px; font-family: Verdana;"><!--#t--> mv</td>
+</tr>
+</table>
+</span>
+</div>
+</body></html>
